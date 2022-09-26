@@ -6,9 +6,9 @@
  * @flow strict-local
  */
 
-import React, {useState} from 'react';
-import type {Node}
-from 'react';
+import 'react-native-gesture-handler';
+import React, {useState,useRef, useEffect} from 'react';
+import type {Node} from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -16,15 +16,38 @@ import {
     StyleSheet,
     Text,
     useColorScheme,
-    View
+    View,
+    Dimensions,
+    Animated, 
+    Easing,
+    RefreshControl
 } from 'react-native';
 import {Header as HeaderRNE, HeaderProps, Icon, Button} from '@rneui/themed';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {FlatList, TouchableOpacity} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import {Dropdown} from 'react-native-element-dropdown';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { Slider } from "@rneui/themed";
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer} from '@react-navigation/native';
+import { createNativeStackNavigator} from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Card,TextInput } from 'react-native-paper';
+import { Provider as PaperProvider } from 'react-native-paper';
+import CryptoJS from "react-native-crypto-js";
+import LottieView from "lottie-react-native";
+import {
+    LineChart,
+    BarChart,
+    PieChart,
+    ProgressChart,
+    ContributionGraph,
+    StackedBarChart
+  } from "react-native-chart-kit";
+import { color } from 'react-native-reanimated';
+import { white } from 'react-native-paper/lib/typescript/styles/colors';
+import { TextInputAffix } from 'react-native-paper/lib/typescript/components/TextInput/Adornment/TextInputAffix';
 
 
 const data = [
@@ -48,11 +71,52 @@ const data = [
         value: '5'
     },
 ];
+const Drawer = createDrawerNavigator();
+const Stack = createStackNavigator();
+var AES = require("react-native-crypto-js").AES;
 
+function LoginScreen({navigation}) {
+  const [name, setName] = useState(''); 
+  const [sex,setSex] = useState('');
+  const [age,setAge] = useState('');
+  return (
+    
+    
+    <ScrollView style={styles.scrollView}>  
+    <HeaderRNE      
+      backgroundColor='black'
+      barStyle="default"
+      centerComponent={{
+        text: "Details",
+        style: { color: "#fff",fontSize: 22, fontWeight: "bold" },
+      }}      
+      containerStyle={{ width: "100%" }}           
+      placement="center"          
+    />  
+     
+    <Text></Text>
+   
+      <Card style={styles.card}>
+        <Card.Title title = "Enter Patient Details" />
+        
+        <Card.Content>
+        <TextInput mode="outlined" label="Name" value={name} onChangeText={(text) => setName(text)} style={styles.textInput} /> 
+        <TextInput mode = "outlined" label = "Age" value ={age} onChangeText ={(Number) => setAge(Number)} style = {styles.textInput} />
+        <TextInput mode = "outlined" label = "Sex" value ={sex} onChangeText ={(text) => setSex(text)} style = {styles.textInput}/>
+       <Text></Text>
+        <Button  buttonStyle = { {width: '100%',backgroundColor: 'rgba(39, 39, 39, 1)'}} mode="contained" disabled={name.length === 0 || sex.length === 0 || age.length === 0} onPress={() => navigation.navigate('Home',{Name : name,Sex: sex,Age: age})}>
+        Enter
+        </Button>
+        </Card.Content>
+        </Card>
+    </ScrollView>
+    
+  )
+}
 
-
-
-const App: () => Node = () => {
+function HomeScreen({ route,navigation }){
+    const {Name,Sex,Age} = route.params;
+    
     const [value1, setValue_1] = useState(null);
     const [value2, setValue_2] = useState(null);
     const [value3, setValue_3] = useState(null);
@@ -67,7 +131,9 @@ const App: () => Node = () => {
 
     const [sliderValue,setSliderValue] = useState(0);
     const [iterValue,setIterValue] = useState(2);
-    const [duration,setDuration] = useState(1);
+    const [duration,setDuration] = useState(1);  
+
+   
    
 
     const renderLabel1 = () => {
@@ -151,9 +217,9 @@ const App: () => Node = () => {
         if(str == ""){
             str = "12345";
         }
-        console.log(str);
-        console.log(sliderValue);
+        
         var allfields = JSON.stringify({color: str, intensity: sliderValue, iterations: iterValue, duration: duration});
+        var detailfields = JSON.stringify({name: Name, age: Age,sex: Sex});
 
         const request = new Request('https://api.thingspeak.com/update.json', {
             method: 'POST',
@@ -162,7 +228,7 @@ const App: () => Node = () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(
-                {api_key: "U22K59XZQ3MDYUOT", field1: 1, field2: allfields}
+                {api_key: "TLANZNS5J12MS789", field1: 1, field2: allfields, field3: detailfields}
             )
 
         });
@@ -179,35 +245,25 @@ const App: () => Node = () => {
             console.error(error);
         });
 
-
+              navigation.navigate('Data',{Name: Name,Age: Age,Sex: Sex})
     };
 
 
     return (
-        <SafeAreaProvider style={backgroundStyle}>
-            <HeaderRNE 
-            backgroundColor='black'
-            leftComponent={
-                    {color: '#fff'}
-                }
-                rightComponent={<View
-                    style={
-styles.headerRight}>
-                <TouchableOpacity>
+        <SafeAreaProvider style={backgroundStyle}>        
+        <HeaderRNE      
+      backgroundColor='black'
+      barStyle="default"
+      centerComponent={{
+        text: "Pupil Detection",
+        style: { color: "#fff",fontSize: 22, fontWeight: "bold" },
+      }}      
+      containerStyle={{ width: "100%" }}           
+      placement="center"          
+    />  
 
-                    </TouchableOpacity>
-<TouchableOpacity
-style={
-{marginLeft: 10}}>
-
-
-                </TouchableOpacity></View>}
-                centerComponent={
-                    {
-                        text: 'Pupil Detection',
-                        style: styles.heading
-                    }
-                }/> 
+   
+      
 
     <Text style = {styles.HeaderTextStyle}>Select Color Order</Text>
     
@@ -436,6 +492,390 @@ style={
         </SafeAreaProvider>
     );
 };
+function DataScreen({ route,navigation }){
+    const [red_data, setRedData] = useState([]);
+    const [green_data, setGreenData] = useState([]);
+    const [blue_data, setBlueData] = useState([]);
+    const [yellow_data, setYellowData] = useState([]);
+    const [white_data, setWhiteData] = useState([]);    
+    const [data,setData] = useState([]);
+    const [start,setStart] = useState(1);
+    const [stop,setStop] = useState(0);  
+    const [refreshing, setRefreshing] = React.useState(false);
+    const onRefresh = () => {
+      setRefreshing(true);
+      setTimeout(() => {
+        getData();
+        setRefreshing(false);
+      }, 2000);
+    };
+    const getData = async () => {
+        
+        try {
+            const response = await fetch(
+                'https://api.thingspeak.com/channels/1871939/feeds.json?api_key=TLANZNS5J12MS789&results=1'
+            ).then((response) => response.json()).then((json) =>{setRefreshing(false),setData(json.feeds[0])});
+          console.log(data);
+          var iv = CryptoJS.enc.Utf8.parse('jansarannathi123');
+          var key ='sreehaachapra123';
+          key = CryptoJS.enc.Utf8.parse(key);
+          var decrypted_red =  CryptoJS.AES.decrypt(data.field1, key, { iv: iv, mode: CryptoJS.mode.CBC});
+          var decrypted_green = CryptoJS.AES.decrypt(data.field2, key, { iv: iv, mode: CryptoJS.mode.CBC});
+          var decrypted_blue = CryptoJS.AES.decrypt(data.field3, key, { iv: iv, mode: CryptoJS.mode.CBC});
+          var decrypted_yellow = CryptoJS.AES.decrypt(data.field4, key, { iv: iv, mode: CryptoJS.mode.CBC});
+          var decrypted_white = CryptoJS.AES.decrypt(data.field5, key, { iv: iv, mode: CryptoJS.mode.CBC});
+          decrypted_red = decrypted_red.toString(CryptoJS.enc.Utf8);
+          decrypted_green = decrypted_green.toString(CryptoJS.enc.Utf8);
+          decrypted_blue = decrypted_blue.toString(CryptoJS.enc.Utf8);
+          decrypted_yellow = decrypted_yellow.toString(CryptoJS.enc.Utf8);
+          decrypted_white = decrypted_white.toString(CryptoJS.enc.Utf8);   
+          console.log("ide ankunta: " + decrypted_white); 
+          setRedData(JSON.parse(decrypted_red.replace(/'/g, '"')).red);
+          setGreenData(JSON.parse(decrypted_green.replace(/'/g, '"')).green);
+          setBlueData(JSON.parse(decrypted_blue.replace(/'/g, '"')).blue);
+          setYellowData(JSON.parse(decrypted_yellow.replace(/'/g, '"')).yellow);
+          setWhiteData(JSON.parse(decrypted_white.replace(/'/g, '"')).white);
+
+                       
+          }
+           catch (error) {
+            console.error(error);
+          }        
+        navigation.navigate('Lottie');
+    } 
+
+   
+        
+   
+    return (
+      <ScrollView  refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <HeaderRNE      
+      backgroundColor='black'
+      barStyle="default"
+      centerComponent={{
+        text: "Data Visualization",
+        style: { color: "#fff",fontSize: 22, fontWeight: "bold" },
+      }}      
+      containerStyle={{ width: "100%" }}           
+      placement="center"          
+     />       
+    {Object.keys(red_data).length !== 0 ?
+    <LineChart    
+        data={{
+            datasets: [
+              {
+                data:red_data,       
+              },
+            ],
+          }}
+        width={(Dimensions.get("window").width)*0.95} // from react-native    
+        height={220}    
+        yAxisSuffix="mm"
+        yAxisInterval={1} // optional, defaults to 1
+        chartConfig={{
+          backgroundColor: "#DB2452",
+          backgroundGradientFrom: "#DB2452",
+          backgroundGradientTo: "#ED622F",
+          decimalPlaces: 2, // optional, defaults to 2dp
+          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          style: {
+            borderRadius: 16
+          },     
+        
+          propsForDots: {
+            r: "6",
+            strokeWidth: "2",
+            stroke: "#ffa726"
+          }
+        }}
+      
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+          
+          alignItems: 'center',
+        }}
+      /> : null
+      }
+      
+
+      {Object.keys(green_data).length !== 0 ?
+      <LineChart
+          
+          data={{
+              datasets: [
+                {
+                  data: green_data,
+                }, 
+              ],
+            }}
+          width={(Dimensions.get("window").width)*0.95} 
+          height={220}    
+          yAxisSuffix="mm"
+          yAxisInterval={1} 
+          chartConfig={{
+            backgroundColor: "#006861",
+            backgroundGradientFrom: "#006861",
+            backgroundGradientTo: "#81F491",
+            decimalPlaces: 2, 
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            style: {
+              borderRadius: 16
+            },
+            
+            propsForDots: {
+              r: "6",
+              strokeWidth: "2",
+              stroke: "#ffa726"
+            }
+          }}
+          
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,      
+            alignItems: 'center',
+          }}
+        /> : null
+
+        }
+
+      {Object.keys(blue_data).length !== 0 ?
+      <LineChart
+          
+          data={{
+              datasets: [
+                {
+                  data: blue_data,
+                },
+              ],
+            }}
+          width={(Dimensions.get("window").width)*0.95}    
+          height={220}    
+          yAxisSuffix="mm"
+          yAxisInterval={1} 
+          chartConfig={{
+            backgroundColor: "#000DBF",
+            backgroundGradientFrom: "#000DBF",
+            backgroundGradientTo: "#5E4FE2",
+            decimalPlaces: 2, 
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            style: {
+              borderRadius: 16
+            },               
+            propsForDots: {
+              r: "6",
+              strokeWidth: "2",
+              stroke: "#ffa726"
+            }
+          }}
+        
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+            
+            alignItems: 'center',
+          }}
+        /> : null
+        }
+
+    {Object.keys(yellow_data).length !== 0 ?
+    <LineChart
+        
+        data={{
+            datasets: [
+              {
+                data: yellow_data,
+              },
+            ],
+          }}
+        width={(Dimensions.get("window").width)*0.95}    
+        height={220}    
+        yAxisSuffix="mm"
+        yAxisInterval={1} 
+        chartConfig={{
+          backgroundColor: "#D1BF1F",
+          backgroundGradientFrom: "#D1BF1F",
+          backgroundGradientTo: "#EFE62F",
+          decimalPlaces: 2, 
+          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          style: {
+            borderRadius: 16
+          },          
+          propsForDots: {
+            r: "6",
+            strokeWidth: "2",
+            stroke: "#ffa726"
+          }
+        }}
+        
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+          
+          alignItems: 'center',
+        }}
+      /> : null
+    }
+
+
+
+
+   
+
+</ScrollView>
+    
+    ); 
+
+
+}
+
+function LottieScreen({navigation}){
+  useEffect(() => {
+    setTimeout(() => {
+      navigation.navigate('Data');
+    }, 5000);})
+  return (
+    <View style = {{display: 'flex',flex: 1,alignItems: 'center',justifyContent: 'center'}}>
+      <LottieView
+        source={require("./assets/1402-eye-blinking.json")}
+        style={styles.loadinganimation}
+        autoPlay
+      />
+    </View>
+  );
+}
+
+
+
+function SplashScreen({navigation }){
+
+const backgroundFade = useRef(new Animated.Value(0)).current;
+const logoFade = useRef(new Animated.Value(0)).current;
+const logoMovement = useRef(new Animated.Value(0)).current;
+const ButtonFade = useRef(new Animated.Value(0)).current;
+   useEffect(() => {
+      Animated.timing(backgroundFade, {
+         toValue: 1,
+         duration: 2000,
+         useNativeDriver: true,
+      }).start();
+      Animated.timing(logoFade, {
+         toValue: 1,
+         duration: 2000,
+         useNativeDriver: true,
+      }).start();
+      Animated.timing(ButtonFade,{
+        toValue: 1,
+        duration: 6000,
+        useNativeDriver: true,
+      }).start();
+      setTimeout(() => {
+         Animated.timing(logoMovement, {
+               toValue: -220,
+               duration: 2000,
+               easing: Easing.inOut(Easing.exp),
+               useNativeDriver: true,
+         }).start();
+      }, 2250);
+   }, []);
+
+   const styles = StyleSheet.create({
+      container: {
+         flex: 1,
+         alignItems: 'center',
+         justifyContent: 'center',
+         backgroundColor: 'black',
+         opacity: backgroundFade,
+      },
+      logo: {
+         color: 'white',
+         fontSize: 48,
+         marginLeft: 10,
+         fontWeight: 'bold',
+         opacity: logoFade,
+         transform: [{translateY: logoMovement}],
+      },
+      fadebuttonStyle: {
+        width: 160,
+        backgroundColor: 'white',     
+        height: 50,   
+        borderRadius: 30,     
+      }
+   });
+   return ( 
+     <Animated.View style={styles.container}>
+         <Animated.Text style={styles.logo}>Hitomi.</Animated.Text>   
+       <Animated.View style={{opacity: ButtonFade}}>
+         <Button buttonStyle={styles.fadebuttonStyle}               
+                icon={{
+                  name: 'eye',
+                  type: 'font-awesome',
+                  size: 15,
+                  color: 'black',
+                }}
+                iconRight
+                iconContainerStyle={{ marginLeft: 10 }}
+                containerStyle={
+                    {
+                        margin: 5,
+                        marginTop: 20,
+                        alignSelf: 'center',
+                        padding: 20,
+                        
+                    }
+                }
+
+                disabledStyle={
+                    {
+                        borderWidth: 2,
+                        borderColor: "#00F"
+                    }
+                }
+                disabledTitleStyle={
+                    {color: "#00F"}
+                }
+
+                onPress={
+                    () => navigation.navigate('Details')
+                }
+                title="Dive In"
+                titleProps={
+                    {}
+                }
+                titleStyle={
+                    {marginHorizontal: 5,
+                     color: 'black',                     
+                    }
+                }/>
+
+                </Animated.View>               
+      </Animated.View>  
+      
+      
+   );
+}
+
+
+const App: () => Node = () => {
+  return (
+    <PaperProvider>
+    <NavigationContainer>
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Screen name="Splash" component={SplashScreen}/>
+        <Stack.Screen name="Details" component={LoginScreen}/>
+        <Stack.Screen name="Home" component={HomeScreen}/>
+        <Stack.Screen name="Data" component={DataScreen}/>
+        <Stack.Screen name="Lottie" component={LottieScreen}/>
+        </Stack.Navigator>
+    </NavigationContainer>
+    </PaperProvider>
+  )
+
+}
 
 const styles = StyleSheet.create({
   
@@ -554,7 +994,33 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'stretch',
       },
+      scrollView: {
+        backgroundColor: 'white',
+        paddingTop: 10
+        },
+      card: {
+        width: '90%',
+        marginLeft: 'auto',
+        marginRight: 'auto',       
+        
+        },
+
+      textInput: {
+          marginBottom: 10,
+          backgroundColor: 'white',
+      },
+      loadinganimation: {
+        width: 100,
+        height: 100,   
+        alignSelf: 'center',
+      },
+
     
 });
 
 export default App;
+
+
+
+
+
